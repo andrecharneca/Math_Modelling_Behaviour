@@ -8,6 +8,15 @@ connection = pymysql.connect(host='localhost',
                              db='students',
                              cursorclass=pymysql.cursors.DictCursor)
 try:
+
+
+
+
+
+
+
+
+
     # connection is not autocommit by default. So you must commit to save # your changes.
     connection.commit()
     with connection.cursor() as cursor: # Read a single record
