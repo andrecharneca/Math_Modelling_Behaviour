@@ -9,8 +9,6 @@ if __name__ == '__main__':
     df = pd.read_csv('../data/lpmc01.dat', sep='\t')
     database = db.Database('LPMC', df)
 
-    print(database.data.head(0))
-
     # define the variables
     TRAVEL_MODE = Variable('travel_mode')
     FARETYPE = Variable('faretype')
@@ -62,7 +60,7 @@ if __name__ == '__main__':
 
     # Create the Biogeme object
     biogeme = bio.BIOGEME(database, logprob)
-    biogeme.modelName = 'model0'
+    biogeme.modelName = 'model1'
 
     # Calculate the null log likelihood for reporting
     nullLogLikelihood = biogeme.calculateNullLoglikelihood(av)

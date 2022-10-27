@@ -9,8 +9,6 @@ if __name__ == '__main__':
     df = pd.read_csv('../data/lpmc01.dat', sep='\t')
     database = db.Database('LPMC', df)
 
-    print(database.data.head(0))
-
     # define the variables
     TRAVEL_MODE = Variable('travel_mode')
     FARETYPE = Variable('faretype')
