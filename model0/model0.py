@@ -6,7 +6,7 @@ from biogeme.expressions import Beta, Variable
 
 if __name__ == '__main__':
     # load the data
-    df = pd.read_csv('./data/lpmc01.dat', sep='\t')
+    df = pd.read_csv('../data/lpmc01.dat', sep='\t')
     database = db.Database('LPMC', df)
 
     print(database.data.head(0))
