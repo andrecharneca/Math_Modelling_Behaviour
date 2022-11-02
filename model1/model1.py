@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     # Auxiliary variables
     COST_DRIVING = (COST_DRIVING_FUEL + COST_DRIVING_CCHARGE) * (DRIVING_LICENSE == 1 and CAR_OWNERSHIP != 0)
-    DUR_PT = DUR_PT_ACCESS + DUR_PT_RAIL + DUR_PT_BUS + DUR_PT_INT * PT_INTERCHANGES
+    DUR_PT = DUR_PT_ACCESS + DUR_PT_RAIL + DUR_PT_BUS + DUR_PT_INT
 
     # Definition of utility functions
     V_WALK = ASC_WALK + B_TIME_WALK * DUR_WALKING
