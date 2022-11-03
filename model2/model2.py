@@ -28,6 +28,7 @@ if __name__ == '__main__':
     COST_TRANSIT = Variable('cost_transit')
     COST_DRIVING_FUEL = Variable('cost_driving_fuel')
     COST_DRIVING_CCHARGE = Variable('cost_driving_ccharge')
+    PURPOSE = Variable('purpose')
 
     # Parameters to be estimated
     ASC_CAR = Beta('ASC_CAR', 0, None, None, 0)
@@ -50,12 +51,13 @@ if __name__ == '__main__':
     # Divide into age groups (0-16, 16-30, 30-60, 60+) and create dummy variables
     df['age_group'] = pd.cut(df['age'], [0, 16, 30, 60, 1000], labels=[0, 1, 2, 3])
     AGE_GROUP = Variable('age_group')
-    segmentation = seg.DiscreteSegmentationTuple(variable=AGE_GROUP, mapping={0: 0, 1: 1, 2: 2, 3: 3})
-    segmented_ASC_CAR = seg.segment_parameter(ASC_CAR, [segmentation])
-    segmented_ASC_PT = seg.segment_parameter(ASC_PT, [segmentation])
-    segmented_ASC_WALK = seg.segment_parameter(ASC_WALK, [segmentation])
-    segmented_ASC_BIKE = seg.segment_parameter(ASC_BIKE, [segmentation])
-
+    segmentation_1 = seg.DiscreteSegmentationTuple(variable=AGE_GROUP, mapping={0: 0, 1: 1, 2: 2, 3: 3})
+    segmentation_2 = seg.DiscreteSegmentationTuple(variable=PURPOSE, mapping={i: i for i in range(1, 6)})
+    segs = [segmentation_1, segmentation_2]
+    segmented_ASC_CAR = seg.segment_parameter(ASC_CAR, segs)
+    segmented_ASC_PT = seg.segment_parameter(ASC_PT, segs)
+    segmented_ASC_WALK = seg.segment_parameter(ASC_WALK, segs)
+    segmented_ASC_BIKE = seg.segment_parameter(ASC_BIKE, segs)
 
     # Definition of utility functions
     V_WALK = segmented_ASC_WALK + B_TIME_WALK * DUR_WALKING
@@ -73,7 +75,7 @@ if __name__ == '__main__':
     logprob = models.loglogit(V, av, TRAVEL_MODE)
 
     # Create the Biogeme object
-    biogeme = bio.BIOGEME(database, logprob)
+    biogeme = bio.BIOGEME(database, logprob, numberOfThreads=4)
     biogeme.modelName = 'model2'
 
     # Calculate the null log likelihood for reporting
@@ -89,4 +91,4 @@ if __name__ == '__main__':
     print(f'Null log likelihood: {nullLogLikelihood}')
     print(f'Likelihood: {likelihood}')
 
-    print(results.getLaTeX())
+    # print(results.getLaTeX())
