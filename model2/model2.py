@@ -51,8 +51,8 @@ if __name__ == '__main__':
     # Divide into age groups (0-16, 16-30, 30-60, 60+) and create dummy variables
     df['age_group'] = pd.cut(df['age'], [0, 16, 30, 60, 1000], labels=[0, 1, 2, 3])
     AGE_GROUP = Variable('age_group')
-    segmentation_1 = seg.DiscreteSegmentationTuple(variable=AGE_GROUP, mapping={0: 0, 1: 1, 2: 2, 3: 3})
-    segmentation_2 = seg.DiscreteSegmentationTuple(variable=PURPOSE, mapping={i: i for i in range(1, 6)})
+    segmentation_1 = seg.DiscreteSegmentationTuple(variable=AGE_GROUP, mapping={0: 'young', 1: 'young_adult', 2: 'adult', 3: 'senior'})
+    segmentation_2 = seg.DiscreteSegmentationTuple(variable=PURPOSE, mapping={i: f'purpose_{i}' for i in range(1, 6)})
     segs = [segmentation_1, segmentation_2]
     segmented_ASC_CAR = seg.segment_parameter(ASC_CAR, segs)
     segmented_ASC_PT = seg.segment_parameter(ASC_PT, segs)
@@ -91,4 +91,4 @@ if __name__ == '__main__':
     print(f'Null log likelihood: {nullLogLikelihood}')
     print(f'Likelihood: {likelihood}')
 
-    # print(results.getLaTeX())
+    print(results.getLaTeX())
