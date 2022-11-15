@@ -10,6 +10,8 @@ if __name__ == '__main__':
     df = pd.read_csv('../data/lpmc01.dat', sep='\t')
     database = db.Database('LPMC', df)
 
+ 
+
     # define the variables
     TRAVEL_MODE = Variable('travel_mode')
     FARETYPE = Variable('faretype')
@@ -28,21 +30,20 @@ if __name__ == '__main__':
     COST_TRANSIT = Variable('cost_transit')
     COST_DRIVING_FUEL = Variable('cost_driving_fuel')
     COST_DRIVING_CCHARGE = Variable('cost_driving_ccharge')
-    PURPOSE = Variable('purpose')
+    #new attribute
+    DRIVING_TRAFFIC_PERCENT = Variable('driving_traffic_percent')
 
     # Parameters to be estimated
     ASC_CAR = Beta('ASC_CAR', 0, None, None, 0)
     ASC_PT = Beta('ASC_PT', 0, None, None, 0)
     ASC_WALK = Beta('ASC_WALK', 0, None, None, 0)
-    ASC_BIKE = Beta('ASC_BIKE', 0, None, None, 1)
+    ASC_BIKE = Beta('ASC_BIKE', 0, None, None, 1) #fixed to 0
     B_TIME_CAR = Beta('B_TIME_CAR', 0, None, None, 0)
     B_TIME_PT = Beta('B_TIME_PT', 0, None, None, 0)
     B_TIME_WALK = Beta('B_TIME_WALK', 0, None, None, 0)
     B_TIME_BIKE = Beta('B_TIME_BIKE', 0, None, None, 0)
     B_COST = Beta('B_COST', 0, None, None, 0)
-    B_YOUNG = Beta('B_YOUNG', 0, None, None, 0)
-    B_YOUNG_ADULT = Beta('B_YOUNG_ADULT', 0, None, None, 0)
-    B_ADULT = Beta('B_ADULT', 0, None, None, 0)
+    B_DRIVING_TRAFFIC_PERCENT = Beta('B_DRIVING_TRAFFIC_PERCENT', 0, None, None, 0)
 
     # Auxiliary variables
     COST_DRIVING = (COST_DRIVING_FUEL + COST_DRIVING_CCHARGE)
@@ -51,19 +52,14 @@ if __name__ == '__main__':
     # Divide into age groups (0-16, 16-30, 30-60, 60+) and create dummy variables
     df['age_group'] = pd.cut(df['age'], [0, 16, 30, 60, 1000], labels=[0, 1, 2, 3])
     AGE_GROUP = Variable('age_group')
-    segmentation_1 = seg.DiscreteSegmentationTuple(variable=AGE_GROUP, mapping={0: 'young', 1: 'young_adult', 2: 'adult', 3: 'senior'})
-    segmentation_2 = seg.DiscreteSegmentationTuple(variable=PURPOSE, mapping={i: f'purpose_{i}' for i in range(1, 6)})
-    segs = [segmentation_1, segmentation_2]
-    segmented_ASC_CAR = seg.segment_parameter(ASC_CAR, segs)
-    segmented_ASC_PT = seg.segment_parameter(ASC_PT, segs)
-    segmented_ASC_WALK = seg.segment_parameter(ASC_WALK, segs)
-    segmented_ASC_BIKE = seg.segment_parameter(ASC_BIKE, segs)
+    segmentation_age = seg.DiscreteSegmentationTuple(variable=AGE_GROUP, mapping={0: 'young', 1: 'young_adult', 2: 'adult', 3: 'senior'})
+    segmented_B_TIME_WALK = seg.segment_parameter(B_TIME_WALK, [segmentation_age])
 
     # Definition of utility functions
-    V_WALK = segmented_ASC_WALK + B_TIME_WALK * DUR_WALKING
-    V_BIKE = segmented_ASC_BIKE + B_TIME_BIKE * DUR_CYCLING
-    V_PT = segmented_ASC_PT + B_TIME_PT * DUR_PT + B_COST * COST_TRANSIT
-    V_CAR = segmented_ASC_CAR + B_TIME_CAR * DUR_DRIVING + B_COST * COST_DRIVING
+    V_WALK = ASC_WALK + segmented_B_TIME_WALK * DUR_WALKING 
+    V_BIKE = ASC_BIKE + B_TIME_BIKE * DUR_CYCLING
+    V_PT = ASC_PT + B_TIME_PT * DUR_PT + B_COST * COST_TRANSIT
+    V_CAR = ASC_CAR + B_TIME_CAR * DUR_DRIVING + B_COST * COST_DRIVING + B_DRIVING_TRAFFIC_PERCENT * DRIVING_TRAFFIC_PERCENT
 
     # Associate utility functions with the numbering of alternatives
     V = {1: V_WALK, 2: V_BIKE, 3: V_PT, 4: V_CAR}
