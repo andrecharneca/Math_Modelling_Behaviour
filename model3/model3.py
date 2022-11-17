@@ -43,6 +43,7 @@ if __name__ == '__main__':
     B_TIME_BIKE = Beta('B_TIME_BIKE', 0, None, None, 0)
     B_COST = Beta('B_COST', 0, None, None, 0)
     B_DRIVING_TRAFFIC_PERCENT = Beta('B_DRIVING_TRAFFIC_PERCENT', 0, None, None, 0)
+    LAMBDA = Beta('LAMBDA', 1, None, None, 0)
 
     # Auxiliary variables
     COST_DRIVING = (COST_DRIVING_FUEL + COST_DRIVING_CCHARGE)
@@ -54,17 +55,15 @@ if __name__ == '__main__':
     segmentation_age = seg.DiscreteSegmentationTuple(variable=AGE_GROUP, mapping={0: 'young', 1: 'young_adult', 2: 'adult', 3: 'senior'})
     segmented_B_TIME_WALK = seg.segment_parameter(B_TIME_WALK, [segmentation_age])
 
-    # logarithmic trasnformation of time
-    logarithmic_dur_cycling = log(DUR_CYCLING)
-    logarithmic_dur_walking = log(DUR_WALKING)
-    logarithmic_dur_pt = log(DUR_PT)
-    logarithmic_dur_driving  = log(DUR_DRIVING)
-    
-    # Definition of utility functions
-    V_WALK = ASC_WALK + segmented_B_TIME_WALK * logarithmic_dur_walking 
-    V_BIKE = ASC_BIKE + B_TIME_BIKE * logarithmic_dur_cycling
-    V_PT = ASC_PT + B_TIME_PT * logarithmic_dur_pt + B_COST * COST_TRANSIT
-    V_CAR = ASC_CAR + B_TIME_CAR * logarithmic_dur_driving + B_COST * COST_DRIVING + B_DRIVING_TRAFFIC_PERCENT * DRIVING_TRAFFIC_PERCENT
+    boxcox_dur_walking = models.boxcox(DUR_WALKING, LAMBDA)
+    boxcox_dur_cycling = models.boxcox(DUR_CYCLING, LAMBDA)
+    boxcox_dur_driving = models.boxcox(DUR_DRIVING, LAMBDA)
+    boxcox_dur_pt = models.boxcox(DUR_PT, LAMBDA)
+
+    V_WALK = ASC_WALK + segmented_B_TIME_WALK * boxcox_dur_walking
+    V_BIKE = ASC_BIKE + B_TIME_BIKE * boxcox_dur_cycling
+    V_PT = ASC_PT + B_TIME_PT * boxcox_dur_pt + B_COST * COST_TRANSIT
+    V_CAR = ASC_CAR + B_TIME_CAR * boxcox_dur_driving + B_COST * COST_DRIVING + B_DRIVING_TRAFFIC_PERCENT * DRIVING_TRAFFIC_PERCENT
 
     # Associate utility functions with the numbering of alternatives
     V = {1: V_WALK, 2: V_BIKE, 3: V_PT, 4: V_CAR}
@@ -77,7 +76,7 @@ if __name__ == '__main__':
 
     # Create the Biogeme object
     biogeme = bio.BIOGEME(database, logprob, numberOfThreads=4)
-    biogeme.modelName = 'model2'
+    biogeme.modelName = 'model3'
 
     # Calculate the null log likelihood for reporting
     nullLogLikelihood = biogeme.calculateNullLoglikelihood(av)
@@ -92,4 +91,4 @@ if __name__ == '__main__':
     print(f'Null log likelihood: {nullLogLikelihood}')
     print(f'Likelihood: {likelihood}')
 
-    #print(results.getLaTeX())
+    print(results.getLaTeX())
