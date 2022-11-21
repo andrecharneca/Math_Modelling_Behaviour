@@ -73,8 +73,8 @@ if __name__ == '__main__':
 
     # Nesting: separate by motorized and non-motorized
     mu = Beta('mu', 1, 1, 10, 0) # min=1, max=10
-    non_motorized = 1.0, [1,2]
-    motorized = mu, [3,4]
+    non_motorized = 1.0, [1]
+    motorized = mu, [2,3,4]
     nests = motorized, non_motorized
 
     # The choice model is a logit, with availability conditions
@@ -97,4 +97,4 @@ if __name__ == '__main__':
     print(f'Null log likelihood: {nullLogLikelihood}')
     print(f'Likelihood: {likelihood}')
 
-    #print(results.getLaTeX())
+    # print(results.getLaTeX())
