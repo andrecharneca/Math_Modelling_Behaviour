@@ -11,6 +11,10 @@ if __name__ == '__main__':
     # load the data
     df = pd.read_csv('../data/lpmc01.dat', sep= '\t') 
 
+
+    ## Question 1: Weights ##
+
+
     census = {
         'OLD_MEN': 1633263,
         'YG_MEN': 2676249,
@@ -53,7 +57,15 @@ if __name__ == '__main__':
     sum_weights = df['Weight'].sum()
     print("\nSum of weights (should be equal to sample size): ", sum_weights)
 
-    ## Market Shares ##
+
+    ## Question 2: Predicted Market Shares  ##
+    # We want to compute the market share of each mode, by using the model
+    # to predict the probability of choosing each mode. We multiply this by
+    # the weight of each person, and sum over all persons. This gives the 
+    # predicted market share of each mode.
+    # The confidence interval is computed with bootstrapping.
+
+    
     database = db.Database('LPMC', df)
     # create age_group column
     df['age_group'] = pd.cut(df['age'], [0, 16, 30, 60, 1000], labels=[0, 1, 2, 3])
@@ -79,18 +91,50 @@ if __name__ == '__main__':
         'prob_CAR': prob_CAR,
     }
     biosim = bio.BIOGEME(database, simulate)
-    simulated_values = biosim.simulate(results.getBetaValues())
-    print("\nSimulated values (head): ", simulated_values.head())
 
-    # compute market shares with weighted means of individual probabilities
+    # get market shares
+    simulated_values = biosim.simulate(results.getBetaValues())
+
     for mode in ['WALK', 'BIKE', 'PT', 'CAR']:
-        simulated_values['Weighted ' + mode] = (
-            simulated_values['Weight'] *
-            simulated_values['prob_' + mode]
+        simulated_values[f'Weighted {mode}'] = (
+            simulated_values['Weight'] * 
+            simulated_values[f'prob_{mode}']
         )
 
-    # use a loop to compute the market shares for all modes
-    for mode in ['WALK', 'BIKE', 'PT', 'CAR']:
-        market_share = simulated_values['Weighted ' + mode].mean()
-        print(f'Market share for {mode}: {100*market_share:.1f}%')
+    # bootstrap the data
+    N_boot = 200
+    print(f"Bootstrapping {N_boot} times...")
+    results_bootstrapping = biogeme.estimate(bootstrap=N_boot)
+    betas = biogeme.freeBetaNames()
+    b = results_bootstrapping.getBetasForSensitivityAnalysis(betas)
 
+    # confidence interval of 90%
+    left, right = biosim.confidenceIntervals(b, 0.9)
+
+    for mode in ['WALK', 'BIKE', 'PT', 'CAR']:
+        left['Weighted ' + mode] = (
+            left['Weight'] * 
+            left['prob_' + mode]
+        )
+        right['Weighted ' + mode] = (
+            right['Weight'] * 
+            right['prob_' + mode]
+        )
+ 
+    for mode in ['WALK', 'BIKE', 'PT', 'CAR']:
+        left_str = '{:.2f}'.format(left["Weighted " + mode].mean())
+        right_str = '{:.2f}'.format(right["Weighted " + mode].mean())
+        print(f'Market share for {mode}: {100*simulated_values[f"Weighted {mode}"].mean():.2f}% ')
+        print(f'90% Confidence interval: [-{left_str}, +{right_str}]%')
+        print()
+
+    ## Question 3: Actual Market Shares ##
+    # We want to compute the weighted market share of each mode, by using the data
+    # We just need pandas for this
+
+    actual_market_shares = df[['travel_mode', 'Weight']].groupby('travel_mode').sum() / df['Weight'].sum()
+
+    # use the command above to print in loop
+    print("\n Actual market shares from data:")
+    for i, mode in enumerate(['WALK', 'BIKE', 'PT', 'CAR']):
+        print(f'Market share for {mode}: {100*actual_market_shares["Weight"].loc[i+1]:.2f}%')
