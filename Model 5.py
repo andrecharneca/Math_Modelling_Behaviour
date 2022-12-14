@@ -127,7 +127,7 @@ if __name__ == '__main__':
     # Estimate the parameters
     results = biogeme.estimate()
     
-    # Define the probabilities
+    # Define the estimated probabilities
     PROB_WALK = exp(V_WALK)/(exp(V_WALK)+exp(V_BIKE)+exp(V_PT)+exp(V_CAR))
     PROB_BIKE = exp(V_BIKE)/(exp(V_WALK)+exp(V_BIKE)+exp(V_PT)+exp(V_CAR))
     PROB_PT = exp(V_PT)/(exp(V_WALK)+exp(V_BIKE)+exp(V_PT)+exp(V_CAR))
@@ -143,6 +143,7 @@ if __name__ == '__main__':
     PROB_PT_IF_CAR = exp(V_PT)/(exp(V_WALK)+exp(V_BIKE)+exp(V_PT)+exp(V_CAR_SCENARIO))
     PROB_CAR_IF_CAR = exp(V_CAR_SCENARIO)/(exp(V_WALK)+exp(V_BIKE)+exp(V_PT)+exp(V_CAR_SCENARIO))
     
+    # Calculate the desired values: elasticities, values of time, market shares.
     simulation1 = {
         'Weight': WEIGHT,
         'Prob. walk': PROB_WALK,
@@ -252,7 +253,8 @@ if __name__ == '__main__':
     simulated_values4['Weight'] *
     simulated_values4['VOT car']
     )    
-
+    
+    # Printing the desired values for the "Forecasting" part
     for mode in ['walk', 'bike', 'PT', 'car']:
         print(f'Market share for {mode}: {100*simulated_values1[f"Weighted {mode}"].mean():.2f}% ')
         print()
@@ -265,21 +267,19 @@ if __name__ == '__main__':
     print('Average value of time in PT: ', round(100*simulated_values4['Weighted VOT PT'].mean())/100, ' GBP/hour')
     print()
     print('Average value of time in car: ', round(100*simulated_values4['Weighted VOT car'].mean())/100, ' GBP/hour','\n')
-    print('Direct aggregate elasticity of car cost: ', (simulated_values4['Elast. dir. car']*simulated_values4['Weighted prob. car']).sum()/(simulated_values4['Weighted prob. car']).sum(),'\n')
-    print('Direct aggregate elasticity of PT cost: ', (simulated_values4['Elast. dir. PT']*simulated_values4['Weighted prob. PT']).sum()/(simulated_values4['Weighted prob. PT']).sum(),'\n')
-    print('Cross aggregate elasticity of PT cost and car prob.: ', (simulated_values4['Elast. cross PT-car']*simulated_values4['Weighted prob. car']).sum()/(simulated_values4['Weighted prob. car']).sum(),'\n')
-    print('Cross aggregate elasticity of PT cost and walk prob.: ', (simulated_values4['Elast. cross PT-walk']*simulated_values4['Weighted prob. walk']).sum()/(simulated_values4['Weighted prob. walk']).sum(),'\n')
-    print('Cross aggregate elasticity of PT cost and bike prob.: ', (simulated_values4['Elast. cross PT-bike']*simulated_values4['Weighted prob. bike']).sum()/(simulated_values4['Weighted prob. bike']).sum(),'\n')
-    print('Cross aggregate elasticity of car cost and PT prob.: ', (simulated_values4['Elast. cross car-PT']*simulated_values4['Weighted prob. PT']).sum()/(simulated_values4['Weighted prob. PT']).sum(),'\n')
-    print('Cross aggregate elasticity of car cost and bike prob.: ', (simulated_values4['Elast. cross car-bike']*simulated_values4['Weighted prob. bike']).sum()/(simulated_values4['Weighted prob. bike']).sum(),'\n')
-    print('Cross aggregate elasticity of car cost and walk prob.: ', (simulated_values4['Elast. cross car-walk']*simulated_values4['Weighted prob. walk']).sum()/(simulated_values4['Weighted prob. walk']).sum(),'\n')
-    print('Normalizing factor of walk prob. elast.:',(simulated_values4['Weighted prob. walk']).sum(),'\n')
-    print('Normalizing factor of bike prob. elast.:',(simulated_values4['Weighted prob. bike']).sum(),'\n')
-    print('Normalizing factor of PT prob. elast.:',(simulated_values4['Weighted prob. PT']).sum(),'\n')
-    print('Normalizing factor of car prob. elast.:',(simulated_values4['Weighted prob. car']).sum())
+    
     for mode in ['walk', 'bike', 'PT', 'car']:
-        print(f'Difference of {mode} logprob. for PT cost divided by -0.15:', np.log(simulated_values2[f"Weighted {mode}"].mean()/simulated_values1[f"Weighted {mode}"].mean())/(-0.15))
+        print(f'Normalizing factor of {mode} prob. elast.:',(simulated_values4[f'Weighted prob. {mode}']).sum(),'\n')
+    for mode in ['walk', 'bike', 'PT', 'car']:
+        for prob in ['PT', 'car']:
+            if prob==mode:
+                print(f'Direct aggregate elasticity of {mode} cost: ', (simulated_values4[f'Elast. dir. {mode}']*simulated_values4[f'Weighted prob. {mode}']).sum()/(simulated_values4[f'Weighted prob. {mode}']).sum(),'\n')
+            else:
+                print(f'Cross aggregate elasticity of {prob} cost and {mode} prob.: ', (simulated_values4[f'Elast. cross {prob}-{mode}']*simulated_values4[f'Weighted prob. {mode}']).sum()/(simulated_values4[f'Weighted prob. {mode}']).sum(),'\n')
+
+    for mode in ['walk', 'bike', 'PT', 'car']:
+        print(f'Difference of {mode} logprob. for PT cost divided by log(1/1.15):', np.log(simulated_values2[f"Weighted {mode}"].mean()/simulated_values1[f"Weighted {mode}"].mean())/(np.log(1/1.15)))
         print()
     for mode in ['walk', 'bike', 'PT', 'car']:
-        print(f'Difference of {mode} logprob. for car cost divided by 0.15:', np.log(simulated_values3[f"Weighted {mode}"].mean()/simulated_values1[f"Weighted {mode}"].mean())/(0.15))
+        print(f'Difference of {mode} logprob. for car cost divided by log(1/0.85):', np.log(simulated_values3[f"Weighted {mode}"].mean()/simulated_values1[f"Weighted {mode}"].mean())/(np.log(1/0.85)))
         print()
